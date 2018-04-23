@@ -13,6 +13,9 @@ import os
 
 def traj_segment_generator(pi, env, horizon, stochastic):
     # Initialize state variables
+
+    # Horizon in this case means batch size
+    assert horizon % env.horizon == 0
     t = 0
     ac = env.action_space.sample()
     new = True
@@ -47,6 +50,7 @@ def traj_segment_generator(pi, env, horizon, stochastic):
             # several of these batches, then be sure to do a deepcopy
             ep_rets = []
             ep_lens = []
+            env.reset()
         i = t % horizon
         obs[i] = ob
         vpreds[i] = vpred
