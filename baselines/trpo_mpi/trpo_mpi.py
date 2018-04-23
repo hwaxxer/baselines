@@ -9,6 +9,7 @@ from collections import deque
 from baselines.common.mpi_adam import MpiAdam
 from baselines.common.cg import cg
 from contextlib import contextmanager
+import os
 
 def traj_segment_generator(pi, env, horizon, stochastic):
     # Initialize state variables
@@ -166,6 +167,8 @@ def learn(env, policy_fn, *,
         return out
 
     U.initialize()
+    if rank == 0:
+        saver = tf.train.Saver()
     th_init = get_flat()
     MPI.COMM_WORLD.Bcast(th_init, root=0)
     set_from_flat(th_init)
@@ -286,6 +289,11 @@ def learn(env, policy_fn, *,
 
         if rank==0:
             logger.dump_tabular()
+            if iters_so_far % 10 == 0:
+                ckpt_dir = 'checkpoints'
+                fname = os.path.join(ckpt_dir, 'trpo-model')
+                os.makedirs(os.path.dirname(fname), exist_ok=True)
+                saver.save(tf.get_default_session(), fname, global_step=iters_so_far)
 
 def flatten_lists(listoflists):
     return [el for list_ in listoflists for el in list_]
